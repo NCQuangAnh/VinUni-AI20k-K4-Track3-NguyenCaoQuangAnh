@@ -4,10 +4,7 @@ from multi_agent_research_lab.core.schemas import BenchmarkMetrics
 
 
 def render_markdown_report(metrics: list[BenchmarkMetrics]) -> str:
-    """Render benchmark metrics to markdown.
-
-    TODO(student): Add richer analysis, examples, screenshots, and trace links.
-    """
+    """Render benchmark metrics to markdown, with a short comparison when 2+ runs are given."""
 
     lines = [
         "# Benchmark Report",
@@ -24,4 +21,23 @@ def render_markdown_report(metrics: list[BenchmarkMetrics]) -> str:
             f"| {item.run_name} | {item.latency_seconds:.2f} | {cost} | {quality} "
             f"| {citation} | {failure} | {item.notes} |"
         )
+
+    if len(metrics) >= 2:
+        lines += ["", "## Comparison", ""]
+        baseline, *rest = metrics
+        for item in rest:
+            latency_delta = item.latency_seconds - baseline.latency_seconds
+            quality_delta = (
+                (item.quality_score or 0) - (baseline.quality_score or 0)
+                if item.quality_score is not None and baseline.quality_score is not None
+                else None
+            )
+            latency_note = f"{latency_delta:+.2f}s latency vs {baseline.run_name}"
+            quality_note = (
+                f"{quality_delta:+.1f} quality vs {baseline.run_name}"
+                if quality_delta is not None
+                else "quality not comparable"
+            )
+            lines.append(f"- **{item.run_name}**: {latency_note}, {quality_note}.")
+
     return "\n".join(lines) + "\n"

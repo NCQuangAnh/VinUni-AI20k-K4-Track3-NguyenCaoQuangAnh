@@ -4,9 +4,14 @@ Keep config small and explicit. Do not read environment variables directly in ag
 """
 
 from functools import lru_cache
+from pathlib import Path
+from typing import Any
 
+import yaml
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+LAB_CONFIG_PATH = Path(__file__).resolve().parents[3] / "configs" / "lab_default.yaml"
 
 
 class Settings(BaseSettings):
@@ -42,3 +47,12 @@ def get_settings() -> Settings:
     """Return cached settings instance."""
 
     return Settings()
+
+
+@lru_cache(maxsize=1)
+def load_lab_config(path: Path = LAB_CONFIG_PATH) -> dict[str, Any]:
+    """Load `configs/lab_default.yaml` (max_iterations, per-agent model/temperature, ...)."""
+
+    if not path.exists():
+        return {}
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
